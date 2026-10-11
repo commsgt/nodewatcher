@@ -1,0 +1,21 @@
+[Unit]
+Description=nodewatch - AllStar / EchoLink / server monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=nodewatch
+WorkingDirectory=/opt/nodewatch
+ExecStart=/usr/bin/python3 /opt/nodewatch/nodewatch.py -c /opt/nodewatch/config.toml
+Restart=always
+RestartSec=30
+Environment=PYTHONUNBUFFERED=1
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/nodewatch
+ProtectHome=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

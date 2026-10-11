@@ -1,0 +1,82 @@
+# nodewatch config - copy to config.toml and edit.
+# Keep this file private (chmod 600): it holds your email password.
+
+[settings]
+interval_seconds = 120        # how often to check everything
+fail_threshold = 2            # consecutive failed checks before a DOWN alert (2 x 2min = 4 min)
+unknown_threshold = 15        # checks before a "can't check" notice (status site down, etc.)
+remind_every_hours = 6        # re-alert while something stays down (0 = never)
+
+# AllStar defaults (can be overridden per target):
+#   "stats" = node must have reported to stats.allstarlink.org recently
+#   "iax"   = send an IAX2 poke straight to the node on UDP 4569 and expect a reply
+# Listing both means both must pass.
+allstar_checks = ["stats"]
+allstar_stale_minutes = 15    # stats older than this = down
+
+echolink_list_stale_minutes = 30
+
+[email]
+smtp_host = "smtp.gmail.com"
+smtp_port = 587
+security = "starttls"         # "starttls" (587), "ssl" (465), or "none"
+username = "you@gmail.com"
+password = "your-16-char-app-password"
+from_addr = "nodewatch <you@gmail.com>"
+to = ["you@gmail.com"]
+subject_prefix = "[nodewatch]"
+
+# Optional phone push notifications via the free ntfy app (ntfy.sh).
+# Pick a long, hard-to-guess topic name and subscribe to it in the app.
+[ntfy]
+url = ""                      # e.g. "https://ntfy.sh/radio-nodes-x7k2p9q"
+token = ""
+
+
+# ---------------------------------------------------------------- targets
+# One [[target]] block per thing to watch. "name" is what shows in alerts.
+
+[[target]]
+type = "allstar"
+name = "My AllStar node 12345"
+node = 12345
+
+[[target]]
+type = "allstar"
+name = "Node 23456 (IAX poke too)"
+node = 23456
+checks = ["stats", "iax"]     # IP/port taken from the AllStar registration
+# iax_host = "node.example.com"   # or set it yourself (needed if behind a proxy)
+# iax_port = 4569
+
+[[target]]
+type = "hub"
+name = "Midlands Hub 34567"
+node = 34567
+checks = ["stats", "iax"]
+# min_links = 3               # optional: alert if fewer nodes than this are linked
+
+[[target]]
+type = "echolink"
+name = "EchoLink KX4ABC-R"
+callsign = "KX4ABC-R"
+# node = 123456               # EchoLink node number also works (checked first)
+
+# General servers -----------------------------------------------------------
+
+[[target]]
+type = "http"
+name = "XLX reflector dashboard"
+url = "https://xlx.example.com/"
+keyword = "XLX"               # text that only appears when the dashboard is working
+
+[[target]]
+type = "ping"
+name = "Web server"
+host = "203.0.113.10"
+
+[[target]]
+type = "tcp"
+name = "Web server SSH"
+host = "203.0.113.10"
+port = 22
