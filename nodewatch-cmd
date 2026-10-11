@@ -1,0 +1,53 @@
+#!/bin/bash
+# The "nodewatch" command. install.sh puts this in /usr/local/bin/nodewatch.
+DIR="@DIR@"
+PY="@PYTHON@"
+CFG="$DIR/config.toml"
+
+if [ "$(id -u)" -ne 0 ]; then
+    if command -v sudo >/dev/null; then exec sudo "$0" "$@"; fi
+    echo "Please run this as root."; exit 1
+fi
+
+as_nodewatch() {
+    if command -v runuser >/dev/null; then
+        runuser -u nodewatch -- "$PY" "$DIR/nodewatch.py" -c "$CFG" "$@"
+    else
+        su -s /bin/sh nodewatch -c "\"$PY\" \"$DIR/nodewatch.py\" -c \"$CFG\" $*"
+    fi
+}
+
+usage() {
+    cat <<USAGE
+nodewatch - AllStar / EchoLink / server monitor
+
+  sudo nodewatch                 setup menu: add nodes, servers, email (same as: nodewatch setup)
+  sudo nodewatch status          check everything now and show the results
+  sudo nodewatch probe WHAT      look up a node number, IP address or web address
+                                 and suggest what to watch (several at once is fine)
+  sudo nodewatch test-email      send a test alert
+  sudo nodewatch log             watch the live log (Ctrl-C to stop)
+  sudo nodewatch restart         restart after editing the config by hand
+  sudo nodewatch stop            stop watching
+  sudo nodewatch edit            edit config.toml by hand, then restart
+
+Config: $CFG
+USAGE
+}
+
+case "${1:-setup}" in
+    setup|menu)       exec "$PY" "$DIR/nodewatch.py" -c "$CFG" --setup ;;
+    status|check)     as_nodewatch --check ;;
+    probe|find)       shift
+                      [ $# -gt 0 ] || { echo "usage: nodewatch probe <node number | IP | web address> ..."; exit 1; }
+                      for x in "$@"; do "$PY" "$DIR/nodewatch.py" --probe "$x"; echo; done ;;
+    test-email|test)  as_nodewatch --test-email ;;
+    log|logs)         exec journalctl -u nodewatch -f -n 50 ;;
+    start|restart)    systemctl enable nodewatch >/dev/null 2>&1
+                      systemctl restart nodewatch && sleep 2
+                      systemctl --no-pager status nodewatch | head -5 ;;
+    stop)             systemctl stop nodewatch && echo "stopped" ;;
+    edit)             ${EDITOR:-nano} "$CFG" && systemctl restart nodewatch && echo "restarted" ;;
+    version|--version) "$PY" "$DIR/nodewatch.py" --version ;;
+    *)                usage ;;
+esac

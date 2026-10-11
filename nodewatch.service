@@ -1,3 +1,5 @@
+# Template: install.sh replaces @DIR@ and @PYTHON@ and installs this as
+# /etc/systemd/system/nodewatch.service
 [Unit]
 Description=nodewatch - AllStar / EchoLink / server monitor
 After=network-online.target
@@ -6,14 +8,14 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=nodewatch
-WorkingDirectory=/opt/nodewatch
-ExecStart=/usr/bin/python3 /opt/nodewatch/nodewatch.py -c /opt/nodewatch/config.toml
+WorkingDirectory=@DIR@
+ExecStart=@PYTHON@ @DIR@/nodewatch.py -c @DIR@/config.toml
 Restart=always
 RestartSec=30
 Environment=PYTHONUNBUFFERED=1
 NoNewPrivileges=true
 ProtectSystem=strict
-ReadWritePaths=/opt/nodewatch
+ReadWritePaths=@DIR@
 ProtectHome=true
 PrivateTmp=true
 
